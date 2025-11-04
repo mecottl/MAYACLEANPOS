@@ -2,7 +2,8 @@
 import pool from '../config/db.config.js';
 
 /**
- * Obtiene todos los pedidos activos para el dashboard.
+ * 1. Obtiene pedidos ACTIVOS para el Dashboard
+ * (En Proceso, Listo)
  */
 export const getPedidosDashboard = async (req, res) => {
   try {
@@ -29,7 +30,7 @@ export const getPedidosDashboard = async (req, res) => {
 };
 
 /**
- * Crea un nuevo pedido.
+ * 2. Crea un nuevo pedido.
  */
 export const crearPedido = async (req, res) => {
   try {
@@ -61,7 +62,7 @@ export const crearPedido = async (req, res) => {
 };
 
 /**
- * Actualiza el estado de un pedido y la lealtad del cliente.
+ * 3. Actualiza el estado de un pedido y la lealtad del cliente.
  */
 export const actualizarEstadoPedido = async (req, res) => {
   try {
@@ -127,21 +128,18 @@ export const actualizarEstadoPedido = async (req, res) => {
 };
 
 /**
- * ¡¡VERSIÓN CORREGIDA Y COMPLETA!!
- * Obtiene el historial de pedidos (Entregados y Cancelados)
- * Acepta un filtro de rango de fechas.
+ * 4. Obtiene TODOS los pedidos para el Historial
+ * (Sin filtro de estado, pero con filtro de fecha)
  */
 export const getHistorialPedidos = async (req, res) => {
   try {
-    // --- LÓGICA DE FILTRO DE FECHA ---
-    const { rango } = req.query; // Ej: ?rango=30 DAY, 90 DAY, 1 YEAR
-    let sqlFiltroFecha = ""; // Por defecto, no hay filtro
+    const { rango } = req.query;
+    let sqlFiltroFecha = ""; 
 
+    // Si hay un filtro de rango, se convierte en la cláusula WHERE
     if (rango) {
-      // Usamos INTERVAL para restar tiempo a la fecha actual
-      sqlFiltroFecha = `AND (p.fecha_entrega >= (NOW() - INTERVAL '${rango}') OR p.fecha_creacion >= (NOW() - INTERVAL '${rango}'))`;
+      sqlFiltroFecha = `WHERE (p.fecha_entrega >= (NOW() - INTERVAL '${rango}') OR p.fecha_creacion >= (NOW() - INTERVAL '${rango}'))`;
     }
-    // --- FIN DE LÓGICA DE FILTRO ---
 
     const pedidosHistorial = await pool.query(
       `SELECT 
@@ -151,17 +149,16 @@ export const getHistorialPedidos = async (req, res) => {
          p.precio_total,
          p.estado_flujo,
          p.estado_pago,
-         p.fecha_creacion, -- Columna añadida
-         p.fecha_listo,    -- Columna añadida
+         p.fecha_creacion,
+         p.fecha_listo,
          p.fecha_entrega,
-         p.es_domicilio,   -- Columna añadida
+         p.es_domicilio,
          c.nombre AS nombre_cliente,
          c.telefono AS telefono_cliente
        FROM pedidos p
        JOIN clientes c ON p.cliente_id = c.id
-       WHERE p.estado_flujo IN ('Entregado', 'Cancelado') -- ¡ESTA ES LA CORRECCIÓN!
-       ${sqlFiltroFecha}
-       ORDER BY p.fecha_entrega DESC, p.fecha_creacion DESC`
+       ${sqlFiltroFecha} -- <-- Se añade el WHERE aquí (si existe)
+       ORDER BY p.fecha_creacion DESC, p.fecha_entrega DESC` // Ordenamos por creación
     );
     
     res.status(200).json(pedidosHistorial.rows);
