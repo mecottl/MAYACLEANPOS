@@ -69,12 +69,16 @@ export const buscarCliente = async (req, res) => {
 
 export const getAllClientes = async (req, res) => {
   try {
-    // Ordenamos por fecha de registro para ver los más nuevos primero
-    const clientes = await pool.query(
-      'SELECT * FROM clientes ORDER BY fecha_registro DESC'
-    );
+    const query = `
+      SELECT nombre, telefono, direccion, contador_servicios, fecha_registro 
+      FROM clientes 
+      ORDER BY fecha_registro DESC
+    `;    
+    const clientes = await pool.query(query);
     res.status(200).json(clientes.rows);
+
   } catch (error) {
+    // Si esto falla, el error está en uno de los nombres de columna
     console.error('Error al obtener todos los clientes:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
