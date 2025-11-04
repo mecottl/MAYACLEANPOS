@@ -12,10 +12,11 @@ export const getPedidosDashboard = async (req, res) => {
          p.precio_total, 
          p.estado_flujo, 
          p.estado_pago, 
-         p.fecha_creacion, 
+         p.fecha_creacion,
+         p.es_domicilio,
          c.nombre AS nombre_cliente,
          c.telefono AS telefono_cliente
-       FROM pedidos p -- <-- CORREGIDO
+       FROM pedidos p
        JOIN clientes c ON p.cliente_id = c.id
        WHERE p.estado_flujo IN ('En Proceso', 'Listo')
        ORDER BY p.fecha_creacion ASC`
@@ -42,7 +43,7 @@ export const crearPedido = async (req, res) => {
 
     const nuevoPedido = await pool.query(
       `INSERT INTO pedidos (cliente_id, precio_servicio, tarifa_domicilio, es_domicilio) 
-       VALUES ($1, $2, $3, $4) RETURNING *`, // <-- CORREGIDO
+       VALUES ($1, $2, $3, $4) RETURNING *`,
       [cliente_id, precio_servicio, tarifa_domicilio, es_domicilio]
     );
 
@@ -92,7 +93,7 @@ export const actualizarEstadoPedido = async (req, res) => {
 
     values.push(folio);
     const query = `
-      UPDATE pedidos -- <-- CORREGIDO
+      UPDATE pedidos
       SET ${fields.join(', ')} 
       WHERE folio = $${paramIndex} 
       RETURNING *`;
@@ -106,10 +107,8 @@ export const actualizarEstadoPedido = async (req, res) => {
     const pedidoActualizado = result.rows[0];
     let mensajeRespuesta = 'Pedido actualizado exitosamente';
 
-    // Lógica de Lealtad (¡Ahora sí se ejecutará!)
     if (pedidoActualizado.estado_flujo === 'Entregado' && pedidoActualizado.estado_pago === 'Pagado') {
       await pool.query(
-        // Esta consulta ya estaba bien (usa 'clientes')
         'UPDATE clientes SET contador_servicios = contador_servicios + 1 WHERE id = $1',
         [pedidoActualizado.cliente_id]
       );
@@ -128,17 +127,19 @@ export const actualizarEstadoPedido = async (req, res) => {
 };
 
 /**
- * Obtiene el historial de pedidos (Entregados y Cancelados).
- */export const getHistorialPedidos = async (req, res) => {
+ * ¡¡VERSIÓN CORREGIDA Y COMPLETA!!
+ * Obtiene el historial de pedidos (Entregados y Cancelados)
+ * Acepta un filtro de rango de fechas.
+ */
+export const getHistorialPedidos = async (req, res) => {
   try {
     // --- LÓGICA DE FILTRO DE FECHA ---
-    const { rango } = req.query; // Ej: ?rango=30d, 90d, 365d
+    const { rango } = req.query; // Ej: ?rango=30 DAY, 90 DAY, 1 YEAR
     let sqlFiltroFecha = ""; // Por defecto, no hay filtro
 
     if (rango) {
       // Usamos INTERVAL para restar tiempo a la fecha actual
-      // NOW()::date - '1 day'::interval = 'ayer'
-      sqlFiltroFecha = `AND p.fecha_entrega >= (NOW() - INTERVAL '${rango}')`;
+      sqlFiltroFecha = `AND (p.fecha_entrega >= (NOW() - INTERVAL '${rango}') OR p.fecha_creacion >= (NOW() - INTERVAL '${rango}'))`;
     }
     // --- FIN DE LÓGICA DE FILTRO ---
 
@@ -150,15 +151,16 @@ export const actualizarEstadoPedido = async (req, res) => {
          p.precio_total,
          p.estado_flujo,
          p.estado_pago,
+         p.fecha_creacion, -- Columna añadida
+         p.fecha_listo,    -- Columna añadida
          p.fecha_entrega,
-         p.fecha_creacion,
-         p.es_domicilio,
+         p.es_domicilio,   -- Columna añadida
          c.nombre AS nombre_cliente,
          c.telefono AS telefono_cliente
-       FROM pedidos p -- Corregido a minúsculas
+       FROM pedidos p
        JOIN clientes c ON p.cliente_id = c.id
        WHERE p.estado_flujo IN ('Entregado', 'Cancelado') -- ¡ESTA ES LA CORRECCIÓN!
-       ${sqlFiltroFecha} -- ¡AQUÍ SE APLICA EL FILTRO DE FECHA!
+       ${sqlFiltroFecha}
        ORDER BY p.fecha_entrega DESC, p.fecha_creacion DESC`
     );
     
