@@ -143,3 +143,25 @@ export const actualizarEstadoPedido = async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
+
+export const getHistorialPedidos = async (req, res) => {
+  try {
+    const pedidosHistorial = await pool.query(
+      `SELECT 
+         p.folio, 
+         p.precio_total, 
+         p.estado_flujo, 
+         p.fecha_entrega,
+         p.fecha_creacion,
+         c.nombre AS nombre_cliente
+       FROM Pedidos p
+       JOIN Clientes c ON p.cliente_id = c.id
+       WHERE p.estado_flujo IN ('Entregado', 'Cancelado')
+       ORDER BY p.fecha_entrega DESC, p.fecha_creacion DESC` // Los más recientes primero
+    );
+    res.status(200).json(pedidosHistorial.rows);
+  } catch (error) {
+    console.error('Error al obtener historial de pedidos:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
