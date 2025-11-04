@@ -34,14 +34,49 @@ export const getPedidosDashboard = async (req, res) => {
  */
 export const crearPedido = async (req, res) => {
   try {
-    const { cliente_id, precio_servicio, tarifa_domicilio = 0 } = req.body;
+    // 1. Obtenemos los datos (igual que antes)
+    let { cliente_id, precio_servicio, tarifa_domicilio = 0 } = req.body;
 
     if (!cliente_id || !precio_servicio) {
       return res.status(400).json({ message: 'El cliente_id y el precio_servicio son requeridos' });
     }
 
+    // --- ¡NUEVA LÓGICA DE LEALTAD! ---
+    // 2. Buscamos al cliente para ver su contador
+    const clienteResult = await pool.query(
+      'SELECT contador_servicios FROM clientes WHERE id = $1',
+      [cliente_id]
+    );
+
+    if (clienteResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Error: El cliente no existe' });
+    }
+
+    const cliente = clienteResult.rows[0];
+    const esPedidoGratis = cliente.contador_servicios >= 9; // Es el 10º pedido o más
+    
+    // 3. Si es gratis, modificamos el precio y actualizamos al cliente
+    if (esPedidoGratis) {
+      console.log(`¡Pedido gratis aplicado para el cliente ${cliente_id}!`);
+      
+      // El servicio es gratis, pero el domicilio se cobra
+      precio_servicio = 0; 
+      
+      // Reseteamos el contador y sumamos al historial de gratis
+      await pool.query(
+        `UPDATE clientes 
+         SET contador_servicios = 0, 
+             pedidos_gratis_contador = pedidos_gratis_contador + 1 
+         WHERE id = $1`,
+        [cliente_id]
+      );
+    }
+    // --- FIN DE LA LÓGICA DE LEALTAD ---
+
+    // 4. Lógica de domicilio (igual que antes)
     const es_domicilio = Number(tarifa_domicilio) > 0;
 
+    // 5. Guardamos el pedido (con el precio_servicio normal o en 0)
     const nuevoPedido = await pool.query(
       `INSERT INTO pedidos (cliente_id, precio_servicio, tarifa_domicilio, es_domicilio) 
        VALUES ($1, $2, $3, $4) RETURNING *`,
@@ -49,9 +84,10 @@ export const crearPedido = async (req, res) => {
     );
 
     res.status(201).json({
-      message: 'Pedido creado exitosamente',
+      message: esPedidoGratis ? '¡Pedido gratis aplicado exitosamente!' : 'Pedido creado exitosamente',
       pedido: nuevoPedido.rows[0]
     });
+
   } catch (error) {
     if (error.code === '23503') { 
       return res.status(404).json({ message: 'Error: El cliente_id no existe' });

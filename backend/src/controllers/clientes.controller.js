@@ -70,7 +70,7 @@ export const buscarCliente = async (req, res) => {
 export const getAllClientes = async (req, res) => {
   try {
     const query = `
-      SELECT id, nombre, telefono, direccion, contador_servicios, fecha_registro 
+      SELECT id, nombre, telefono, direccion, contador_servicios, fecha_registro, pedidos_gratis_contador
       FROM clientes 
       ORDER BY fecha_registro DESC
     `;    
