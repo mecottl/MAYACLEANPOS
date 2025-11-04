@@ -158,7 +158,15 @@ export const getHistorialPedidos = async (req, res) => {
        FROM pedidos p
        JOIN clientes c ON p.cliente_id = c.id
        ${sqlFiltroFecha} -- <-- Se añade el WHERE aquí (si existe)
-       ORDER BY p.fecha_creacion DESC, p.fecha_entrega DESC` // Ordenamos por creación
+       ORDER BY
+         CASE 
+           WHEN p.estado_flujo = 'En Proceso' THEN 1
+           WHEN p.estado_flujo = 'Listo' THEN 2
+           WHEN p.estado_flujo = 'Entregado' THEN 3
+           WHEN p.estado_flujo = 'Cancelado' THEN 4
+           ELSE 5 
+         END ASC, -- Ordena por la prioridad (1, 2, 3...)
+         p.fecha_creacion DESC -- Luego, por fecha de creación` // Ordenamos por creación
     );
     
     res.status(200).json(pedidosHistorial.rows);
