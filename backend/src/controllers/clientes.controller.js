@@ -14,7 +14,7 @@ export const crearCliente = async (req, res) => {
     // 3. Guardar en la Base de Datos (Neon)
     // El 'contador_servicios' usará el valor por defecto (0)
     const nuevoCliente = await pool.query(
-      'INSERT INTO Clientes (nombre, telefono, direccion) VALUES ($1, $2, $3) RETURNING *',
+      'INSERT INTO clientes (nombre, telefono, direccion) VALUES ($1, $2, $3) RETURNING *',
       [nombre, telefono, direccion]
     );
 
@@ -46,7 +46,7 @@ export const buscarCliente = async (req, res) => {
 
     // 2. Buscar en la Base de Datos
     const clienteResult = await pool.query(
-      'SELECT * FROM Clientes WHERE telefono = $1',
+      'SELECT * FROM clientes WHERE telefono = $1',
       [telefono]
     );
 
@@ -71,7 +71,7 @@ export const getAllClientes = async (req, res) => {
   try {
     // Ordenamos por fecha de registro para ver los más nuevos primero
     const clientes = await pool.query(
-      'SELECT * FROM Clientes ORDER BY fecha_registro DESC'
+      'SELECT * FROM clientes ORDER BY fecha_registro DESC'
     );
     res.status(200).json(clientes.rows);
   } catch (error) {
