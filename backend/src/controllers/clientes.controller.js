@@ -83,3 +83,67 @@ export const getAllClientes = async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
+
+export const deleteCliente = async (req, res) => {
+  try {
+    const { id } = req.params; // Obtenemos el ID de la URL (ej. /api/clientes/uuid-...)
+
+    // NOTA: PostgreSQL fallará si intentas borrar un cliente
+    // que ya tiene pedidos (por la llave foránea).
+    // Idealmente, aquí deberíamos 'desactivar' al cliente o borrar sus pedidos.
+    // Por ahora, solo manejará el borrado simple.
+    const result = await pool.query(
+      'DELETE FROM clientes WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Cliente no encontrado' });
+    }
+
+    res.status(200).json({ message: 'Cliente eliminado exitosamente' });
+
+  } catch (error) {
+     // Error si el cliente tiene pedidos
+    if (error.code === '23503') {
+      return res.status(400).json({ message: 'Error: No se puede eliminar un cliente que ya tiene pedidos registrados.' });
+    }
+    console.error('Error al eliminar cliente:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+export const updateCliente = async (req, res) => {
+  try {
+    const { id } = req.params; // El ID del cliente de la URL
+    const { nombre, telefono, direccion } = req.body; // Los nuevos datos del formulario
+
+    if (!nombre || !telefono) {
+      return res.status(400).json({ message: 'Nombre y teléfono son requeridos' });
+    }
+
+    const result = await pool.query(
+      `UPDATE clientes 
+       SET nombre = $1, telefono = $2, direccion = $3 
+       WHERE id = $4 
+       RETURNING *`,
+      [nombre, telefono, direccion, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Cliente no encontrado' });
+    }
+
+    res.status(200).json({
+      message: 'Cliente actualizado exitosamente',
+      cliente: result.rows[0]
+    });
+
+  } catch (error) {
+     if (error.code === '23505') { // Teléfono duplicado
+      return res.status(400).json({ message: 'El teléfono ya está registrado con otro cliente.' });
+    }
+    console.error('Error al actualizar cliente:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};

@@ -140,10 +140,12 @@ export const getHistorialPedidos = async (req, res) => {
          p.fecha_entrega,
          p.fecha_creacion,
          c.nombre AS nombre_cliente
-       FROM pedidos p -- <-- CORREGIDO
+         c.telefono AS telefono_cliente
+       FROM pedidos p 
        JOIN clientes c ON p.cliente_id = c.id
        WHERE p.estado_flujo IN ('Entregado', 'Cancelado')
-       ORDER BY p.fecha_entrega DESC, p.fecha_creacion DESC`
+       ORDER BY p.fecha_entrega DESC, p.fecha_creacion DESC
+       `
     );
     res.status(200).json(pedidosHistorial.rows);
   } catch (error) {
