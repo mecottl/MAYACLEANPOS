@@ -12,7 +12,7 @@ const router = Router();
 // 2. Se ejecuta 'verificarToken'. Si el token es válido...
 // 3. Se ejecuta 'crearCliente'.
 router.post('/', verificarToken, crearCliente);
-router.get('/', verificarToken, crearCliente);
+router.get('/', verificarToken, getAllClientes);
 router.get('/buscar', verificarToken, buscarCliente)
 
 
