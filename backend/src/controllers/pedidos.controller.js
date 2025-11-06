@@ -33,13 +33,19 @@ export const getPedidosDashboard = async (req, res) => {
 
 /**
  * 2. Crea un nuevo pedido.
+ * ¡MODIFICADO para aceptar estado_pago!
  */
 export const crearPedido = async (req, res) => {
   try {
-    let { cliente_id, precio_servicio, tarifa_domicilio = 0 } = req.body;
+    // --- ¡CAMBIO AQUÍ! ---
+    // Leemos 'estado_pago' del body. Si no viene, es 'Pendiente'.
+    let { cliente_id, precio_servicio, tarifa_domicilio = 0, estado_pago = 'Pendiente' } = req.body;
 
     if (!cliente_id || !precio_servicio) {
-      return res.status(400).json({ message: 'El cliente_id y el precio_servicio son requeridos' });
+      // El precio 0 está bien (para pedidos gratis), pero no debe ser nulo
+      if (precio_servicio === null || precio_servicio === undefined) {
+         return res.status(400).json({ message: 'El cliente_id y el precio_servicio son requeridos' });
+      }
     }
 
     const clienteResult = await pool.query(
@@ -68,10 +74,12 @@ export const crearPedido = async (req, res) => {
 
     const es_domicilio = Number(tarifa_domicilio) > 0;
 
+    // --- ¡CAMBIO AQUÍ! ---
+    // Añadimos 'estado_pago' a la consulta INSERT
     const nuevoPedido = await pool.query(
-      `INSERT INTO pedidos (cliente_id, precio_servicio, tarifa_domicilio, es_domicilio) 
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [cliente_id, precio_servicio, tarifa_domicilio, es_domicilio]
+      `INSERT INTO pedidos (cliente_id, precio_servicio, tarifa_domicilio, es_domicilio, estado_pago) 
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [cliente_id, precio_servicio, tarifa_domicilio, es_domicilio, estado_pago]
     );
 
     res.status(201).json({
@@ -92,6 +100,7 @@ export const crearPedido = async (req, res) => {
  * 3. Actualiza el estado de un pedido (Listo, Entregado, Cancelado)
  */
 export const actualizarEstadoPedido = async (req, res) => {
+  // ... (Tu función se queda igual)
   try {
     const { folio } = req.params;
     const { estado_flujo, estado_pago } = req.body;
@@ -158,6 +167,7 @@ export const actualizarEstadoPedido = async (req, res) => {
  * 4. Obtiene TODOS los pedidos para el Historial
  */
 export const getHistorialPedidos = async (req, res) => {
+  // ... (Tu función se queda igual) ...
   try {
     const { rango } = req.query;
     let sqlFiltroFecha = ""; 
@@ -194,29 +204,26 @@ export const getHistorialPedidos = async (req, res) => {
   }
 };
 
-// --- ¡NUEVA FUNCIÓN! ---
 /**
  * 5. Agrega o quita el servicio a domicilio de un pedido.
  */
 export const toggleDomicilio = async (req, res) => {
+  // ... (Tu función se queda igual) ...
   try {
     const { folio } = req.params;
-    // El frontend enviará 'true' para añadir, 'false' para quitar
     const { es_domicilio } = req.body; 
 
     if (typeof es_domicilio !== 'boolean') {
       return res.status(400).json({ message: 'Se requiere el campo "es_domicilio" (true/false)' });
     }
 
-    // Define la tarifa basada en la acción
     const nuevaTarifa = es_domicilio ? TARIFA_DOMICILIO_FIJA : 0;
 
-    // Actualiza la base de datos
     const result = await pool.query(
       `UPDATE pedidos
        SET es_domicilio = $1, tarifa_domicilio = $2
        WHERE folio = $3
-       RETURNING *`, // Devuelve el pedido actualizado
+       RETURNING *`,
       [es_domicilio, nuevaTarifa, folio]
     );
 
@@ -226,7 +233,7 @@ export const toggleDomicilio = async (req, res) => {
 
     res.status(200).json({
       message: es_domicilio ? 'Servicio a domicilio añadido' : 'Servicio a domicilio cancelado',
-      pedido: result.rows[0] // Devuelve el pedido con el precio_total recalculado
+      pedido: result.rows[0]
     });
 
   } catch (error) {
