@@ -1,22 +1,25 @@
 // backend/src/controllers/pedidos.controller.js
 import pool from '../config/db.config.js';
 
-// --- ¡NUEVAS CONSTANTES DE NEGOCIO! ---
+// Constante de precio de domicilio (la definimos aquí)
 const PRECIO_POR_KG = 15;
 const TARIFA_DOMICILIO_FIJA = 30;
-const MAX_KG_GRATIS = 10; // El descuento se aplica hasta 10kg
-const PUNTOS_PARA_GRATIS = 9; // El 10º pedido (índice 9) es gratis
-
+const MAX_KG_GRATIS = 10;
+const PUNTOS_PARA_GRATIS = 9; 
 /**
  * 1. Obtiene pedidos ACTIVOS para el Dashboard
  */
 export const getPedidosDashboard = async (req, res) => {
-  // ... (Esta función se queda igual)
   try {
     const pedidosActivos = await pool.query(
       `SELECT 
-         p.folio, p.precio_total, p.estado_flujo, p.estado_pago, 
-         p.fecha_creacion, p.es_domicilio, c.nombre AS nombre_cliente,
+         p.folio, 
+         p.precio_total, 
+         p.estado_flujo, 
+         p.estado_pago, 
+         p.fecha_creacion,
+         p.es_domicilio,
+         c.nombre AS nombre_cliente,
          c.telefono AS telefono_cliente
        FROM pedidos p
        JOIN clientes c ON p.cliente_id = c.id
@@ -32,9 +35,8 @@ export const getPedidosDashboard = async (req, res) => {
 
 /**
  * 2. Crea un nuevo pedido.
- * ¡TOTALMENTE REESCRITO para manejar la lógica de precios!
- */
-export const crearPedido = async (req, res) => {
+ * ¡MODIFICADO para aceptar estado_pago!
+ */export const crearPedido = async (req, res) => {
   try {
     // --- ¡CAMBIO! Recibimos 'kilos' en lugar de 'precio_servicio' ---
     const { cliente_id, kilos, es_domicilio, estado_pago = 'Pendiente' } = req.body;
@@ -107,7 +109,6 @@ export const crearPedido = async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
-
 /**
  * 3. Actualiza el estado de un pedido (Listo, Entregado, Cancelado)
  */
