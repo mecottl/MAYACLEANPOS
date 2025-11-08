@@ -1,0 +1,226 @@
+/* ============================================
+   NUEVO TABLES.CSS (Soluciona el bug de sticky)
+   ============================================ */
+
+/* --- 1. CONTENEDOR DE LA TABLA --- */
+/* Este es el contenedor que scrollea */
+.table-container {
+  padding: 28px;
+  background: white;
+  overflow-x: auto;
+  /* Scroll horizontal */
+  overflow-y: auto;
+  /* Scroll vertical */
+  flex: 1;
+
+  /* Altura máxima para que el scroll se active
+     (100vh - header - action-bar - padding) */
+  max-height: calc(100vh - 160px);
+  /* Ajusta 160px si es necesario */
+
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* === BUSCADOR Y FILTROS === */
+.search-input,
+.select-input {
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 350px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.search-input:focus,
+.select-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+/* === TABLA === */
+.data-table {
+  width: 100%;
+  font-size: 14px;
+
+  /* ¡CLAVE! 'separate' es necesario para que z-index funcione bien en sticky */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* === ENCABEZADO (THEAD) CORREGIDO === */
+.data-table thead {
+  /* El sticky va en el TH, no aquí */
+  z-index: 2;
+  /* Capa 2 (Superior) */
+}
+
+.data-table th {
+  padding: 14px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+
+  /* --- ¡LA CORRECCIÓN MÁGICA! --- */
+  position: sticky;
+  top: 0;
+  /* Se pega al 'top' del .table-container */
+
+  background-color: var(--bg-white);
+  /* Fondo sólido vital */
+  border-bottom: 2px solid var(--border);
+}
+
+/* === CUERPO (TBODY) CORREGIDO === */
+.data-table tbody {
+  position: relative;
+  z-index: 1;
+  /* Capa 1 (Inferior) */
+}
+
+.data-table tbody tr {
+  border-bottom: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--bg-light);
+}
+
+.data-table td {
+  padding: 14px;
+  color: var(--text-dark);
+  background: var(--bg-white);
+  /* Fondo para que no se transparente */
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* Estilo para la celda de Acciones (para alinear botones) */
+.data-table td.acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* === BADGES DE ESTADO === */
+.estado-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 99px;
+  /* Píldora */
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+.estado-entregado {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: var(--accent-green);
+}
+
+.estado-cancelado {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+}
+
+.estado-pendiente {
+  background-color: rgba(234, 179, 8, 0.15);
+  color: var(--accent-yellow);
+}
+
+/* ============================================
+   ACCIONES DE TABLA (Botones) - ¡NUEVO!
+   ============================================ */
+
+/* Contenedor para los botones en la celda <td> */
+.data-table td.acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  /* Evita que los botones cambien de línea */
+  white-space: nowrap;
+}
+
+/* Estilo base para todos los botones/links de acción */
+.btn-accion {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid transparent;
+  background: none;
+}
+
+/* Estilo para "Historial" (es un <a>) */
+.btn-accion.btn-ver {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.btn-accion.btn-ver:hover {
+  text-decoration: underline;
+}
+
+/* Estilo para "Editar" (es un <button>) */
+.btn-accion.btn-editar {
+  color: var(--text-dark);
+  background-color: var(--bg-gray);
+  border-color: var(--border);
+}
+
+.btn-accion.btn-editar:hover {
+  background-color: var(--border);
+}
+
+/* Estilo para "Eliminar" (es un <button>) */
+.btn-accion.btn-eliminar {
+  color: var(--accent-red);
+  background-color: var(--accent-red-light);
+}
+
+.btn-accion.btn-eliminar:hover {
+  background-color: rgba(239, 68, 68, 0.25);
+}
+
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .table-container {
+    padding: 16px;
+    max-height: calc(100vh - 200px);
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+
+  .data-table th {
+    font-size: 11px;
+    position: static;
+    /* Quitamos el sticky en móvil */
+  }
+
+  .data-table td.acciones {
+    white-space: normal;
+    /* Permite que los botones se envuelvan en móvil */
+  }
+
+  .estado-badge {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+}

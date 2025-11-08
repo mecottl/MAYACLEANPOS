@@ -1,0 +1,70 @@
+/* ============================================
+   LOGIN PAGE
+   ============================================ */
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+.login-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-card h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+.login-card .subtitle {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+
+.login-card .form-group {
+  margin-bottom: 16px;
+}
+
+.login-card button {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.error-message {
+  color: var(--accent-red);
+  font-size: 13px;
+  text-align: center;
+  margin-bottom: 16px;
+  padding: 10px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+  display: none;
+}
+
+.error-message.show {
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 28px;
+    margin: 16px;
+  }
+
+  .login-card h1 {
+    font-size: 24px;
+  }
+}

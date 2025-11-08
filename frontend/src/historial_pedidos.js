@@ -3,7 +3,8 @@ import { getHistorialPedidos } from './services/api.js';
 
 let todoElHistorial = [];
 const token = localStorage.getItem('lavander_token');
-let searchInput; // La haremos "global" en este script
+let searchInput;
+let filtroFechaSelect; // <-- Nuevo selector
 
 // --- NAVEGACIÓN Y SEGURIDAD ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -14,18 +15,20 @@ document.addEventListener('DOMContentLoaded', () => {
   
   setupNavigation();
   
-  // 1. Asigna el input de búsqueda
+  // 1. Asigna los inputs
   searchInput = document.querySelector('#buscar-historial');
+  filtroFechaSelect = document.querySelector('#filtro-fecha'); // <-- Nuevo
   
-  // 2. Configura el listener de la búsqueda
+  // 2. Configura los listeners
   setupSearch();
+  setupDateFilter(); // <-- Nuevo
   
   // 3. Carga los datos (esto ahora también activará el filtro)
   cargarHistorial();
 });
 
 function setupNavigation() {
-  // ... (tu código de setupNavigation se queda igual) ...
+  // Asigna los listeners a CADA enlace de la sidebar
   document.querySelector('#nav-dashboard').addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'dashboard.html'; });
   document.querySelector('#nav-crear-orden').addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'new_order.html'; });
   document.querySelector('#nav-clientes').addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'gestion_clientes.html'; });
@@ -35,66 +38,86 @@ function setupNavigation() {
     localStorage.clear();
     window.location.href = 'index.html';
   });
-  // ... (botón de contabilidad) ...
+  const contabilidadBtn = document.querySelector('#nav-contabilidad');
+  if (contabilidadBtn) {
+    contabilidadBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      alert('¡Página de Contabilidad en construcción!');
+    });
+  }
 }
 // --- FIN DE NAVEGACIÓN ---
 
 
 // --- LÓGICA DE LA PÁGINA ---
 
+// Carga los datos desde la API basado en el filtro de fecha
 async function cargarHistorial() {
+  const rango = filtroFechaSelect.value; // Obtiene el valor del filtro (ej. "30 DAY")
   const tbody = document.querySelector('#lista-historial-body');
-  tbody.innerHTML = '<tr><td colspan="5">Cargando historial...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8">Cargando historial...</td></tr>'; // 8 columnas
 
   try {
-    todoElHistorial = await getHistorialPedidos(token);
+    todoElHistorial = await getHistorialPedidos(token, rango); // Pasa el filtro a la API
+    
+    // Primero renderiza todo...
     renderizarHistorial(todoElHistorial);
     
-    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
-    // Ahora que los datos SÍ existen, revisamos la URL.
+    // ...luego revisa si hay un filtro de URL
     checkUrlParams(); 
     
   } catch (error) {
-    tbody.innerHTML = `<tr><td colspan="5" class="error">Error al cargar historial: ${error.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="error">Error al cargar historial: ${error.message}</td></tr>`;
   }
 }
 
+// Pinta los datos en la tabla
 function renderizarHistorial(pedidos) {
   const tbody = document.querySelector('#lista-historial-body');
   tbody.innerHTML = ''; 
 
   if (pedidos.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5">No se encontraron pedidos.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8">No se encontraron pedidos.</td></tr>'; // 8 columnas
     return;
   }
 
   pedidos.forEach(pedido => {
     const tr = document.createElement('tr');
     
-    const fecha = pedido.fecha_entrega ? 
-                  new Date(pedido.fecha_entrega).toLocaleDateString('es-MX') : 
-                  new Date(pedido.fecha_creacion).toLocaleDateString('es-MX');
-                  
-    const estadoClase = pedido.estado_flujo === 'Entregado' ? 'estado-entregado' : 'estado-cancelado';
-    
+    // --- Funciones Helper para formatear ---
+    const formatFecha = (fecha) => {
+      return fecha ? new Date(fecha).toLocaleDateString('es-MX') : 'N/A';
+    };
+    const formatMoneda = (valor) => valor ? `$${Number(valor).toFixed(2)}` : '$0.00';
+    const formatEstado = (estado, claseBase) => {
+      const clase = estado === 'Pagado' || estado === 'Entregado' ? 'estado-entregado' : 'estado-cancelado';
+      return `<span class="estado-badge ${clase}">${estado}</span>`;
+    };
+    const formatDomicilio = (esDomicilio) => {
+      return esDomicilio ? 'Sí' : 'No';
+    };
+    // --- Fin de Helpers ---
+
     tr.innerHTML = `
       <td>${pedido.folio.substring(0, 8)}...</td>
       <td>${pedido.nombre_cliente}</td>
-      <td>${fecha}</td>
-      <td>$${Number(pedido.precio_total).toFixed(2)}</td>
-      <td><span class="estado-badge ${estadoClase}">${pedido.estado_flujo}</span></td>
+      <td>${formatFecha(pedido.fecha_creacion)}</td>
+      <td>${formatFecha(pedido.fecha_entrega)}</td>
+      <td>${formatDomicilio(pedido.es_domicilio)}</td>
+      <td><strong>${formatMoneda(pedido.precio_total)}</strong></td>
+      <td>${formatEstado(pedido.estado_pago)}</td>
+      <td>${formatEstado(pedido.estado_flujo)}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-// --- ¡FUNCIÓN MODIFICADA! ---
+// Configura el filtro de texto
 function setupSearch() {
   searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase();
     
     const pedidosFiltrados = todoElHistorial.filter(pedido => {
-      // Ahora también buscamos por teléfono
       return (pedido.nombre_cliente && pedido.nombre_cliente.toLowerCase().includes(searchTerm)) || 
              (pedido.folio && pedido.folio.toLowerCase().includes(searchTerm)) ||
              (pedido.telefono_cliente && pedido.telefono_cliente.includes(searchTerm));
@@ -104,17 +127,21 @@ function setupSearch() {
   });
 }
 
-// --- ¡NUEVA FUNCIÓN! ---
+// Configura el filtro de fecha
+function setupDateFilter() {
+  filtroFechaSelect.addEventListener('change', () => {
+    // Cuando el filtro <select> cambia, vuelve a cargar todo desde la API
+    cargarHistorial();
+  });
+}
+
+// Revisa si la URL tiene un ?search=...
 function checkUrlParams() {
   const urlParams = new URLSearchParams(window.location.search);
-  const busqueda = urlParams.get('search'); // Busca ?search=...
+  const busqueda = urlParams.get('search'); 
 
   if (busqueda) {
-    // Si lo encuentra:
-    // 1. Pone el valor en la barra de búsqueda
     searchInput.value = busqueda;
-    
-    // 2. Dispara un evento "input" para forzar al 'setupSearch' a filtrar
     searchInput.dispatchEvent(new Event('input'));
   }
 }

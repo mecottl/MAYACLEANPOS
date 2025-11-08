@@ -5,6 +5,8 @@ import { buscarCliente, crearCliente, crearPedido } from './services/api.js';
 const PRECIO_POR_KG = 15;
 const TARIFA_DOMICILIO_FIJA = 30;
 const MIN_KG = 5;
+const MAX_KG_GRATIS = 10;
+const PUNTOS_PARA_GRATIS = 9; // El 10º pedido (9+1) es gratis
 
 let clienteSeleccionado = null;
 
@@ -20,73 +22,98 @@ document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
 
   // --- 1. SELECCIONAR ELEMENTOS DEL DOM ---
-  const form = document.querySelector('.orden-form');
-  
-  // Sección 1
+  const formPedido = document.querySelector('.orden-form');
   const inputBuscarTelefono = document.querySelector('#telefono-buscar');
-  const btnBuscar = form.querySelector('.btn-secondary'); // Botón "Buscar"
+  const btnBuscar = document.querySelector('.form-row-search .btn-secondary');
   const btnMostrarNuevo = document.querySelector('#btn-mostrar-nuevo');
   const infoContainer = document.querySelector('#cliente-info-container');
   const infoNombre = document.querySelector('#cliente-nombre');
   const infoTelefono = document.querySelector('#cliente-telefono');
   const infoDireccion = document.querySelector('#cliente-direccion');
-  
-  // Sección 2
   const seccionNuevoCliente = document.querySelector('.nuevo-cliente-section');
   const inputNombreNuevo = document.querySelector('#nombre-completo');
   const inputTelefonoNuevo = document.querySelector('#telefono-nuevo');
   const inputDireccionNuevo = document.querySelector('#direccion-cliente');
   const btnGuardarCliente = seccionNuevoCliente.querySelector('.btn-secondary');
-
-  // Sección 3 (Con lógica de precios nueva)
   const fieldsetPedido = document.querySelector('.pedido-fieldset');
   const inputKilos = document.querySelector('#input-kilos');
   const checkDomicilio = document.querySelector('#check-domicilio');
   const displayPrecioTotal = document.querySelector('#precio-total');
+  const checkPagado = document.querySelector('#check-pagado');
 
-  
+
   // --- 2. FUNCIONES DE AYUDA (Helpers) ---
-  
+
   const seleccionarCliente = (cliente) => {
-    clienteSeleccionado = cliente; 
+    clienteSeleccionado = cliente;
     infoNombre.textContent = cliente.nombre;
     infoTelefono.textContent = cliente.telefono;
     infoDireccion.textContent = cliente.direccion || 'N/A';
     infoContainer.classList.remove('oculto');
     seccionNuevoCliente.classList.add('oculto');
     fieldsetPedido.disabled = false;
+    actualizarTotal();
   };
 
   const mostrarFormularioNuevoCliente = (telefonoBuscado = '') => {
-    clienteSeleccionado = null; 
-    infoContainer.classList.add('oculto'); 
-    fieldsetPedido.disabled = true; 
+    clienteSeleccionado = null;
+    infoContainer.classList.add('oculto');
+    fieldsetPedido.disabled = true;
     inputTelefonoNuevo.value = telefonoBuscado;
     seccionNuevoCliente.classList.remove('oculto');
     inputBuscarTelefono.value = '';
     inputNombreNuevo.focus();
+    actualizarTotal();
   };
 
-  // Calcula el total basado en kg y checkbox
   const actualizarTotal = () => {
     let kilos = parseFloat(inputKilos.value) || 0;
-    
-    // Forzamos el mínimo si el usuario escribe menos
-    if (kilos > 0 && kilos < MIN_KG) {
-        kilos = MIN_KG;
-        inputKilos.value = MIN_KG;
+    const domicilio = checkDomicilio.checked ? TARIFA_DOMICILIO_FIJA : 0;
+
+    let servicio = 0;
+    let esPedidoGratis = false;
+    let descuento = 0;
+
+    const servicioBruto = kilos * PRECIO_POR_KG;
+
+    if (clienteSeleccionado && clienteSeleccionado.contador_servicios >= PUNTOS_PARA_GRATIS) {
+      esPedidoGratis = true;
+      if (kilos <= MAX_KG_GRATIS) {
+        descuento = servicioBruto;
+        servicio = 0;
+      } else {
+        descuento = MAX_KG_GRATIS * PRECIO_POR_KG;
+        servicio = (kilos - MAX_KG_GRATIS) * PRECIO_POR_KG;
+      }
+    } else {
+      servicio = servicioBruto;
     }
 
-    const servicio = kilos * PRECIO_POR_KG;
-    const domicilio = checkDomicilio.checked ? TARIFA_DOMICILIO_FIJA : 0;
     const total = servicio + domicilio;
-    
-    displayPrecioTotal.textContent = `$${total.toFixed(2)}`;
+
+    const displayTotalEl = document.querySelector('#precio-total');
+    if (esPedidoGratis) {
+      displayTotalEl.innerHTML = `$${total.toFixed(2)} <span class="free-order-tag">(Descuento de $${descuento.toFixed(2)} aplicado)</span>`;
+    } else {
+      displayTotalEl.innerHTML = `$${total.toFixed(2)}`;
+    }
+  };
+
+  const resetFormularioCompleto = () => {
+    clienteSeleccionado = null;
+    fieldsetPedido.disabled = true;
+    infoContainer.classList.add('oculto');
+    seccionNuevoCliente.classList.add('oculto');
+    inputBuscarTelefono.value = '';
+    inputKilos.value = MIN_KG;
+    checkDomicilio.checked = false;
+    checkPagado.checked = false;
+    actualizarTotal();
   };
 
 
   // --- 3. EVENT LISTENERS ---
-  
+
   btnBuscar.addEventListener('click', async () => {
     const telefono = inputBuscarTelefono.value;
     if (!telefono) return;
@@ -100,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnMostrarNuevo.addEventListener('click', () => {
-    mostrarFormularioNuevoCliente(); 
+    mostrarFormularioNuevoCliente();
   });
 
   btnGuardarCliente.addEventListener('click', async () => {
@@ -121,22 +148,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Escuchamos los nuevos inputs de precio
   inputKilos.addEventListener('input', actualizarTotal);
   checkDomicilio.addEventListener('change', actualizarTotal);
-  
-  // Calculamos el total inicial (5kg)
-  actualizarTotal();
+  actualizarTotal(); // Calcula el total inicial
 
-  // Formulario Principal "Crear Pedido"
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault(); 
+  // --- 4. Formulario Principal "Crear Pedido" ---
+  formPedido.addEventListener('submit', async (event) => {
+    event.preventDefault();
     if (!clienteSeleccionado) {
       alert('Debe seleccionar un cliente antes de crear un pedido.');
       return;
     }
 
-    // Lógica de precios
     const kilos = parseFloat(inputKilos.value) || 0;
     if (kilos < MIN_KG) {
       alert(`El mínimo es de ${MIN_KG} kg.`);
@@ -144,26 +167,94 @@ document.addEventListener('DOMContentLoaded', () => {
       actualizarTotal();
       return;
     }
-    const precio_servicio = kilos * PRECIO_POR_KG;
+
+    let precio_servicio = 0;
+    if (clienteSeleccionado && clienteSeleccionado.contador_servicios >= PUNTOS_PARA_GRATIS) {
+      precio_servicio = 0;
+    } else {
+      precio_servicio = kilos * PRECIO_POR_KG;
+    }
+
     const tarifa_domicilio = checkDomicilio.checked ? TARIFA_DOMICILIO_FIJA : 0;
+    const estado_pago = checkPagado.checked ? 'Pagado' : 'Pendiente';
 
     const datosPedido = {
       cliente_id: clienteSeleccionado.id,
-      precio_servicio: precio_servicio,
-      tarifa_domicilio: tarifa_domicilio,
+      kilos: kilos,
+      es_domicilio: checkDomicilio.checked,
+      estado_pago: estado_pago
     };
 
     try {
-      await crearPedido(datosPedido, token);
-      alert('¡Pedido creado exitosamente!');
-      window.location.href = 'dashboard.html';
+      const data = await crearPedido(datosPedido, token);
+      const pedidoCreado = data.pedido;
+
+      const confirmacionWA = confirm(
+        `${data.message}\n\n¿Deseas enviar el ticket por WhatsApp al cliente?`
+      );
+
+      if (confirmacionWA) {
+        // --- ¡¡AQUÍ ESTÁ LA CORRECCIÓN DE EMOJIS!! ---
+
+        // 1. Genera la "ruta de lealtad" con CONTADOR
+        let lealtadTitulo = '';
+        let lealtadProgreso = '';
+        const esPedidoGratis = data.message.includes('gratis');
+
+        if (esPedidoGratis) {
+          lealtadTitulo = '¡Felicidades, usaste tu pedido gratis!';
+          // El contador se reseteó a 0 en el backend
+          lealtadProgreso = `Progreso: 10/${PUNTOS_PARA_GRATIS + 1}`;
+        } else {
+          lealtadTitulo = '¡Gracias por tu compra!';
+          // El contador sumará +1 al *entregar*. Mostramos el contador actual + 1 (este pedido)
+          const contadorActual = clienteSeleccionado.contador_servicios + 1;
+          lealtadProgreso = `Progreso: ${contadorActual}/${PUNTOS_PARA_GRATIS + 1}`;
+        }
+
+        // 2. Genera el desglose de precios
+        const precioBrutoServicio = kilos * PRECIO_POR_KG;
+        const descuento = precioBrutoServicio - pedidoCreado.precio_servicio;
+
+        const nombreCliente = clienteSeleccionado.nombre;
+        const telefonoCliente = clienteSeleccionado.telefono;
+        const total = pedidoCreado.precio_total;
+        const folioCorto = pedidoCreado.folio.substring(0, 8);
+        const domicilio = pedidoCreado.es_domicilio ? 'Sí' : 'No';
+
+        // 3. Construye el mensaje CON saltos de línea %0A
+        //    y usa encodeURIComponent SÓLO en las variables
+        const mensaje =
+          `¡Hola ${encodeURIComponent(nombreCliente)}! 👋%0A` +
+          `Aquí está tu ticket de Mayaclean:%0A%0A` +
+          `*Folio:* ${encodeURIComponent(folioCorto)}%0A` +
+          `*Estado de pago:* ${encodeURIComponent(estado_pago)}%0A%0A` +
+          `--- DESGLOSE ---%0A` +
+          `*Servicio (Lavado ${encodeURIComponent(kilos)}kg):* $${encodeURIComponent(precioBrutoServicio.toFixed(2))}%0A` +
+          `*Servicio a Domicilio:* $${encodeURIComponent(Number(pedidoCreado.tarifa_domicilio).toFixed(2))}%0A` +
+          `*Descuento de Lealtad:* -$${encodeURIComponent(descuento.toFixed(2))}%0A` +
+          `*TOTAL A PAGAR:* $${encodeURIComponent(Number(total).toFixed(2))}%0A%0A` +
+          `--- TU LEALTAD ---%0A` +
+          `${encodeURIComponent(lealtadTitulo)}%0A` +
+          `${encodeURIComponent(lealtadProgreso)}%0A%0A` +
+          `¡Gracias por tu preferencia!`;
+
+        // 4. Crea el enlace (sin encodeURIComponent en el 'mensaje')
+        const waLink = `https://wa.me/52${telefonoCliente}?text=${mensaje}`;
+        window.open(waLink, '_blank');
+      }
+
+      alert('¡Pedido guardado! Listo para crear el siguiente.');
+      resetFormularioCompleto();
+
     } catch (error) {
       alert(`Error al crear el pedido: ${error.message}`);
     }
   });
 });
 
-// --- FUNCIÓN DE NAVEGACIÓN (Corregida) ---
+
+// --- FUNCIÓN DE NAVEGACIÓN ---
 function setupNavigation() {
   document.querySelector('#nav-dashboard').addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'dashboard.html'; });
   document.querySelector('#nav-crear-orden').addEventListener('click', (e) => e.preventDefault()); // Ya está aquí
@@ -174,11 +265,12 @@ function setupNavigation() {
     localStorage.clear();
     window.location.href = 'index.html';
   });
+
   const contabilidadBtn = document.querySelector('#nav-contabilidad');
-  if(contabilidadBtn) {
-      contabilidadBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          alert('¡Página de Contabilidad en construcción!');
-      });
+  if (contabilidadBtn) {
+    contabilidadBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      alert('¡Página de Contabilidad en construcción!');
+    });
   }
 }

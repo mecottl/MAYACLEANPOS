@@ -76,7 +76,7 @@ function renderizarClientes(clientes) {
   tbody.innerHTML = ''; 
 
   if (clientes.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5">No se encontraron clientes.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6">No se encontraron clientes.</td></tr>';
     return;
   }
 
@@ -87,6 +87,7 @@ function renderizarClientes(clientes) {
       <td>${cliente.telefono}</td>
       <td>${cliente.direccion || 'N/A'}</td>
       <td>${cliente.contador_servicios}</td>
+      <td>${cliente.pedidos_gratis_contador}</td>
       <td class="acciones">
         <a href="historial_pedidos.html?search=${cliente.telefono}" class="btn-accion btn-ver">
           Historial

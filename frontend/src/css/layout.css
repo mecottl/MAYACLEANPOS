@@ -1,0 +1,191 @@
+/* ============================================
+   LAYOUT (Sidebar y Contenido Principal)
+   ============================================ */
+
+.sidebar {
+  width: 260px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+  flex-shrink: 0;
+  /* Evita que el sidebar se encoja */
+}
+
+.sidebar-header {
+  padding: 0 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header img {
+  width: 220px;
+  margin: 10px 5px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-link {
+  padding: 12px 20px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  transition: var(--transition);
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-link.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-left-color: var(--accent-green);
+  color: white;
+  font-weight: 600;
+}
+
+.nav-link.logout {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 12px;
+}
+
+.nav-link.logout:hover {
+  color: var(--accent-red);
+}
+
+/* ============================================
+   LAYOUT (Contenedores)
+   ============================================ */
+
+.dashboard-page {
+  display: flex;
+  min-height: 100vh;
+}
+
+.dashboard-container {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  /* ¡CORRECCIÓN! Borramos 'overflow: hidden' que rompía el sticky */
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-light);
+
+  /* ¡CORRECCIÓN! Este es el contenedor que debe scrollear */
+  overflow-y: auto;
+  height: 100vh;
+}
+
+.content-header {
+  padding: 28px;
+  background-color: var(--bg-white);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  /* Hacemos que el header se pegue al 'main-content' */
+  position: sticky;
+  top: 0;
+  z-index: 11;
+  /* Encima de la cabecera de la tabla */
+}
+
+.content-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.action-bar {
+  padding: 20px 28px;
+  background-color: var(--bg-white);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  /* Hacemos que la barra de acción también se pegue */
+  position: sticky;
+  top: 85px;
+  /* Altura del content-header (ajusta 85px si es necesario) */
+  z-index: 10;
+  /* Ligeramente detrás del header, pero encima de la tabla */
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+    height: auto;
+    overflow: auto;
+  }
+
+  .main-content {
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    flex: 1;
+    padding: 0;
+  }
+
+  .nav-link {
+    flex: 1;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    padding: 12px 16px;
+    text-align: center;
+  }
+
+  .nav-link.active {
+    border-left: none;
+    border-bottom-color: var(--accent-green);
+  }
+
+  .nav-link.logout {
+    margin: 0;
+    border: none;
+    padding: 12px 16px;
+  }
+
+  .content-header,
+  .action-bar {
+    position: static;
+    /* Quitamos el sticky en móvil */
+  }
+
+  .content-header {
+    padding: 20px;
+  }
+
+  .content-header h1 {
+    font-size: 22px;
+  }
+
+  .action-bar {
+    padding: 16px 20px;
+  }
+}

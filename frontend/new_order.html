@@ -5,7 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mayaclean - Crear Nueva Orden</title>
-  <link rel="stylesheet" href="styles.css">
+  
+  <link rel="stylesheet" href="./src/css/global.css">
+  <link rel="stylesheet" href="./src/css/layout.css">
+  <link rel="stylesheet" href="./src/css/new_order.css"> 
+  
+  <link rel="icon" href="./public/LAVANDERIA_ICON2.png" type="image/png">
 </head>
 
 <body class="dashboard-page">
@@ -13,9 +18,10 @@
     
     <aside class="sidebar">
       <div class="sidebar-header">
-        <h2>Mayaclean</h2>
+        <a href="./dashboard.html" class="logo">
+          <img src="./public/LAVANDERIA_LOGO.png" alt="Mayaclean Logo" class="logo"/>
+        </a>
       </div>
-      
       <nav class="sidebar-nav">
         <a href="dashboard.html" class="nav-link" id="nav-dashboard">Dashboard</a>
         <a href="new_order.html" class="nav-link active" id="nav-crear-orden">Crear Orden</a>
@@ -32,14 +38,15 @@
       </header>
 
       <div class="form-container">
-        <form class="orden-form">
-
+        
+        <div class="customer-column">
+          
           <section class="form-section">
-            <h2 class="section-title">Buscar Cliente</h2>
-            <div class="form-row">
+            <h2 class="section-title">1. Cliente</h2>
+            <div class="form-row form-row-search">
               <div class="form-group">
                 <label for="telefono-buscar">Buscar por Teléfono</label>
-                <input type="tel" id="telefono-buscar" placeholder="Ingrese el teléfono del cliente" />
+                <input type="tel" id="telefono-buscar" placeholder="Ingrese el teléfono" />
               </div>
               <div class="form-button-group">
                 <button type="button" class="btn-secondary">Buscar</button>
@@ -66,56 +73,60 @@
           </section>
 
           <section class="form-section nuevo-cliente-section oculto">
-            <h2 class="section-title warning-title">Cliente no encontrado. Registrar nuevo:</h2>
-            
+            <h2 class="section-title warning-title">Registrar Nuevo Cliente</h2>
             <div class="form-group">
                 <label for="nombre-completo">Nombre Completo</label>
-                <input type="text" id="nombre-completo" placeholder="Ingrese el nombre completo del cliente" />
+                <input type="text" id="nombre-completo" />
             </div>
-            
             <div class="form-group">
                 <label for="telefono-nuevo">Teléfono</label>
-                <input type="tel" id="telefono-nuevo" placeholder="Teléfono del cliente" />
+                <input type="tel" id="telefono-nuevo" />
             </div>
-            
             <div class="form-group">
                 <label for="direccion-cliente">Dirección (Opcional)</label>
-                <input type="text" id="direccion-cliente" placeholder="Dirección del cliente" />
+                <input type="text" id="direccion-cliente" />
             </div>
-            
             <button type="button" class="btn-secondary btn-full">Guardar Cliente</button>
           </section>
+        
+        </div>
 
-          <section class="form-section">
-            <h2 class="section-title">Detalles del Pedido</h2>
+        <div class="order-column">
+          <form class="orden-form">
+            <section class="form-section">
+              <h2 class="section-title">2. Detalles del Pedido</h2>
 
-            <fieldset class="pedido-fieldset" disabled>
-              <div class="form-row">
+              <fieldset class="pedido-fieldset" disabled>
                 <div class="form-group">
                   <label for="input-kilos">Kilos (kg) - ($15 por kg, min 5kg)</label>
                   <input type="number" id="input-kilos" placeholder="5.0" min="5" step="0.1" value="5" />
                 </div>
-
-                <div class="form-group checkbox-group">
-                  <input type="checkbox" id="check-domicilio" />
-                  <label for="check-domicilio">Servicio a Domicilio (+$30.00)</label>
+                
+                <div class="form-row">
+                  <div class="form-group checkbox-group">
+                    <input type="checkbox" id="check-domicilio" />
+                    <label for="check-domicilio">Servicio a Domicilio (+$30.00)</label>
+                  </div>
+                  <div class="form-group checkbox-group">
+                    <input type="checkbox" id="check-pagado" />
+                    <label for="check-pagado">Marcar como Pagado</label>
+                  </div>
                 </div>
-              </div>
 
-              <div class="precio-total-container">
-                <h3 id="precio-total" class="precio-total">$0.00</h3>
-              </div>
+                <div class="precio-total-container">
+                  <h3 id="precio-total" class="precio-total">$0.00</h3>
+                </div>
 
-              <button type="submit" class="btn-primary btn-full">Crear Pedido</button>
-            </fieldset>
-          </section>
+                <button type="submit" class="btn-primary btn-full">Crear Pedido</button>
+              </fieldset>
+            </section>
+          </form>
+        </div>
 
-        </form>
       </div>
     </main>
   </div>
   <script src="./src/services/api.js" type="module" defer></script>
-  <script src="./src/new_order.js" type="module" defer></script>
+  <script src="./src/new_order.js" type="module" defer charset="UTF-8"></script>
 </body>
-
 </html>
