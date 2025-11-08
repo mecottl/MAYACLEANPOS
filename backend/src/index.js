@@ -23,6 +23,16 @@ app.get('/', (req, res) => {
 app.get('/ping', async (req, res) => {
 });
 
+app.get('/api/keep-alive', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.status(200).json({ message: '¡Database pinged successfully!' });
+  } catch (error) {
+    console.error('Error en keep-alive ping:', error.message);
+    res.status(500).json({ message: 'Database ping failed' });
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/clientes', clientesRoutes);
 app.use('/api/pedidos', pedidosRoutes);
