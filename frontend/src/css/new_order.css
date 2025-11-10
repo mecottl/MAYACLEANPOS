@@ -154,7 +154,7 @@
 .precio-total {
   font-size: 28px;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--primary-dark);
   text-align: right;
 }
 

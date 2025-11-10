@@ -48,7 +48,7 @@
 
 .nav-link.active {
   background-color: rgba(255, 255, 255, 0.15);
-  border-left-color: var(--accent-green);
+  border-left-color: var(--primary-dark);
   color: white;
   font-weight: 600;
 }

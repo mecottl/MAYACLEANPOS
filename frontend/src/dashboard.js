@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (boton.classList.contains('btn-toggle-domicilio')) {
       const accion = boton.dataset.accion;
       const esDomicilio = (accion === 'agregar');
-      const confirmMessage = esDomicilio ? `¿Añadir servicio a domicilio por $30.00?` : `¿Quitar servicio a domicilio y restar $30.00?`;
+      const confirmMessage = esDomicilio ? `¿Añadir servicio a domicilio por $20.00?` : `¿Quitar servicio a domicilio y restar $20.00?`;
 
       if (!confirm(confirmMessage)) return;
 
