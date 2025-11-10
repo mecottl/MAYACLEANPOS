@@ -17,7 +17,6 @@ function _crearMensajeDesglosado(pedido, cliente, kilos, esPedidoGratis) {
 
   if (esPedidoGratis) {
     lealtadTitulo = '¡Felicidades, usaste tu pedido gratis!';
-    lealtadProgreso = `Progreso: 0/${PUNTOS_PARA_GRATIS + 1}`;
   } else {
     lealtadTitulo = '¡Gracias por tu compra!';
     lealtadProgreso = `Progreso: ${contadorActual}/${PUNTOS_PARA_GRATIS + 1}`;
@@ -51,7 +50,7 @@ function _crearMensajeDesglosado(pedido, cliente, kilos, esPedidoGratis) {
     `*Servicio (Lavado ${encodeURIComponent(kilosNum.toFixed(1))}kg):* $${encodeURIComponent(precioBrutoServicio.toFixed(2))}%0A` +
     `*Servicio a Domicilio:* $${encodeURIComponent(tarifaDomicilioNum.toFixed(2))}%0A` +
     `*Descuento de Lealtad:* -$${encodeURIComponent(descuento.toFixed(2))}%0A` +
-    `*TOTAL A PAGAR:* $${encodeURIComponent(Number(total).toFixed(2))}%0A%0A` +
+    `*TOTAL:* $${encodeURIComponent(Number(total).toFixed(2))}%0A%0A` +
     `--- PROGRAMA LEALTAD ---%0A` +
     `${encodeURIComponent(lealtadTitulo)}%0A` +
     `${encodeURIComponent(lealtadProgreso)}%0A%0A` +
